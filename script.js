@@ -26,6 +26,13 @@ function drawQuad(vectors) {
 		...vectors.reduce((acc, e) => acc.concat([e.x, e.y]), [])
 	)
 }
+function drawLine(vectors) {
+	p.stroke(1)
+	p.strokeWeight(1)
+	p.line(
+		...vectors.reduce((acc, e) => acc.concat([e.x, e.y]), [])
+	)
+}
 
 let drawPoint = (v) => p.point(v.x, v.y)
 let drawCircle = (v, r) => p.circle(v.x, v.y, r)
@@ -35,135 +42,88 @@ function render() {
 	p.draw = () => {
 		p.angleMode('degrees');
 
-		let sx = 20
-		let w = 450
-		let sh = 100
-		let h = 250
-		let s = ((p.mouseY / p.height * w-50) - 105)
-		let x = ((p.mouseX / p.width * w))
+		let nx = 150
+		let ny = 150
+		let nw = 100
+		let nh = 400
+		let noff = ((p.mouseY / p.height * nh-50) - 105)
 
-		// Create p5.Vector objects.
 		let tomirror = [
-			v(sx, sh),
-			v(x + (s / 2), sh),
-			v(x - (s / 2), sh+h),
-			v(sx, sh+h)
+			v(nx, ny),
+			v(nx + nw , ny),
+			v(nx + nw, ny+(nh/4) + (noff/2)),
+			v(nx, ny+(nh/4) - + (noff/2))
 		]
 
-		let another = [
-			tomirror[1],
-			v(x + (s / 2) - 100, sh),
-			v(x - (s / 2) - 50, sh+h),
-			tomirror[2],
+		let mainrect = [
+			v(nx, ny),
+			v(nx + nw , ny),
+			v(nx + nw, ny+nh),
+			v(nx, ny+nh)
 		]
 
-		let fullpage = [
-			v(sx, sh),
-			v(w, sh),
-			v(w, sh+h),
-			v(sx, sh+h)
+		let lines = [
+			[v(nx, ny+50), v(nx + nw , ny+75)],
+			[v(nx, ny+150), v(nx + nw , ny+125)],
+			[v(nx, ny+210), v(nx + nw , ny+205)],
+			[ vdup(mainrect[3]), vdup(mainrect[2])]
 		]
-
-
-		let v0 = v(tomirror[1].x, tomirror[1].y);
-		let v1 = v(tomirror[2].x, tomirror[2].y);
 
 		p.background(255)
 		p.fill(255, 0, 0)
-		drawQuad(fullpage)
 
-		let slope = (v0.y - v1.y) / (v0.x - v1.x)
-		let angle = p.atan(slope)
-		let inverse = (1 / slope) * -1
+		p.opacity(.5)
 
-		p.opacity(.8)
+		drawQuad(mainrect)
+		lines.forEach(e => drawLine(e))
 
-		let f = tomirror.reduce((acc, e) => {
-			let otherside = reflectPoint(e, [v0,v1])
-			p.circle(otherside.x, otherside.y, 5)
-			p.circle(e.x, e.y, 5)
-			acc.push(otherside)
-			return acc
-		}, [])
-		let f2 = another.reduce((acc, e) => {
-			let otherside = reflectPoint(e, [v0,v1])
-			p.circle(otherside.x, otherside.y, 5)
-			p.circle(e.x, e.y, 5)
-			acc.push(otherside)
-			return acc
-		}, [])
+		
+		while(lines.length > 1){
+			let popped = lines.shift()
+			let mirrorline =[popped[0], popped[1]]
+			let f = [mirrorline[0], mirrorline[1],  lines[0][1], lines[0][0],].reduce((acc, e) => {
+				let otherside = mirror(e, mirrorline)
+				acc.push(otherside)
+				return acc
+			}, [])
 
-		p.fill(205)
-		drawQuad(tomirror)
-		p.fill(255, 150, 150)
-		let cutf = [
-			f[1],
-			f2[1],
-			f2[2],
-			f[2],
-		]
-		// drawQuad(f)
-		drawQuad(cutf)
-		p.textSize(35)
-		tomirror.map((e, i) => {p.text(i, e.x, e.y)})
+			lines = lines.reduce((acc, e) => {
+				// let otherside = mirror(e, mirrorline)
+				acc.push([mirror(e[0], mirrorline),mirror(e[1], mirrorline)])
+				return acc
+			}, [])
 
-		p.fill(255, 250, 150)
-		let back = [
-			f2[1],
-			f[0],
-			f[3],
-			f2[2],
-		]
+			p.fill(205)
+			// drawQuad(tomirror)
+			p.fill(255, 150, 150)
+			drawQuad(f)
+			mirrorline.map((e, i) => {p.text(i, e.x, e.y)})
+			mainrect.map((e, i) => {p.text(i, e.x, e.y)})
+		}
 
-		// drawQuad(back)
-		let f3 = back.reduce((acc, e) => {
-			let otherside = reflectPoint(e, [f2[1], f2[2]], -1)
-			p.circle(otherside.x, otherside.y, 5)
-			p.circle(e.x, e.y, 5)
-			acc.push(otherside)
-			return acc
-		}, [])
-
-		drawQuad(f3)
-		f3.map((e, i) => {p.text(i, e.x, e.y)})
 	}
 }
 
-function reflectPoint(point, mirror, side=1){
-	let slope = (mirror[0].y - mirror[1].y) / (mirror[0].x - mirror[1].x)
-	// let angle = p.atan(slope)
-	let inverse = (1 / slope) * -1
-	let beyond = v(point.x + 1, point.y + inverse)
-	let pointt = intersect_point(mirror[0], mirror[1], point, beyond)
-	let distance = point.dist(pointt)
-	let otherside = addtopoint(pointt.x, pointt.y, inverse, distance * side)
-	return otherside
-}
+function mirror(p, m){
+     let dx,dy,a,b;
+     let x2,y2;
 
-function addtopoint(x0, y0, m, d, side = 1) {
-	// Length of direction vector (1, m)
-	let L = p.sqrt(1 + m * m);
+	let x0 = m[0].x
+	let x1 = m[1].x
+	let y0 = m[0].y
+	let y1 = m[1].y
 
-	// New point
-	let x1 = x0 + (d / L)*side;
-	let y1 = y0 + ((m * d) / L)*side;
+     dx = (x1 - x0);
+     dy = (y1 - y0);
 
-	return v(x1, y1);
-}
+     a  = (dx * dx - dy * dy) / (dx * dx + dy*dy);
+     b  = 2 * dx * dy / (dx*dx + dy*dy);
 
-function subtractDistanceFromPoint(x, y, m, d) {
-  // Normalize direction vector (1, m)
-  let len = Math.sqrt(1 + m * m);
+     x2 = (a * (p.x - x0) + b*(p.y - y0) + x0);
+     y2 = (b * (p.x - x0) - a*(p.y - y0) + y0);
 
-  // Unit direction vector
-  let ux = 1 / len;
-  let uy = m / len;
+		return v(x2, y2)
 
-  // Move *backwards* distance d
-  let x2 = x - d * ux;
-  let y2 = y - d * uy;
-
-  return v(x2, y2);
 }
 
 function intersect_point(point1, point2, point3, point4) {
