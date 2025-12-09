@@ -38,46 +38,57 @@ let drawPoint = (v) => p.point(v.x, v.y)
 let drawCircle = (v, r) => p.circle(v.x, v.y, r)
 p.angleMode('degrees')
 
+let nx = 150
+let ny = 150
+let nw = 30
+let nh = 400
+let noff = ((p.mouseY / p.height * nh-50) - 105)
+
+let index = 0
+
+let mainrect = [
+	v(nx, ny),
+	v(nx + nw , ny),
+	v(nx + nw, ny+nh),
+	v(nx, ny+nh)
+]
+
+
+let baselines = [
+]
+
+for(let i = 0; i<12; i++) {
+	baselines.push([v(nx, ny+(i+1)*50), v(nx + nw , ny+(i+1)*50+15)])
+}
+
+baselines.push([vdup(mainrect[3]), vdup(mainrect[2])])
+
+
+
 function render() {
 	p.draw = () => {
 		p.angleMode('degrees');
 
-		let nx = 150
-		let ny = 150
-		let nw = 100
-		let nh = 400
-		let noff = ((p.mouseY / p.height * nh-50) - 105)
+		let lines = JSON.parse(JSON.stringify(baselines))
 
-		let tomirror = [
-			v(nx, ny),
-			v(nx + nw , ny),
-			v(nx + nw, ny+(nh/4) + (noff/2)),
-			v(nx, ny+(nh/4) - + (noff/2))
-		]
-
-		let mainrect = [
-			v(nx, ny),
-			v(nx + nw , ny),
-			v(nx + nw, ny+nh),
-			v(nx, ny+nh)
-		]
-
-		let lines = [
-			[v(nx, ny+50), v(nx + nw , ny+75)],
-			[v(nx, ny+150), v(nx + nw , ny+125)],
-			[v(nx, ny+210), v(nx + nw , ny+205)],
-			[ vdup(mainrect[3]), vdup(mainrect[2])]
-		]
 
 		p.background(255)
-		p.fill(255, 0, 0)
-
-		p.opacity(.5)
+		p.fill(255)
 
 		drawQuad(mainrect)
-		lines.forEach(e => drawLine(e))
+		lines.forEach((e, i) =>{
+			if (i == index) {
+				p.stroke(255,0,0)
+				p.strokeWeight(8)
+				p.line(e[0].x, e[0].y,e[1].x, e[1].y,  )
+			}
+			else drawLine(e)
+		})
 
+		p.opacity(.5)
 		
+		let _index = 0
+		let currentline = []
 		while(lines.length > 1){
 			let popped = lines.shift()
 			let mirrorline =[popped[0], popped[1]]
@@ -99,8 +110,19 @@ function render() {
 			drawQuad(f)
 			mirrorline.map((e, i) => {p.text(i, e.x, e.y)})
 			mainrect.map((e, i) => {p.text(i, e.x, e.y)})
+
+			if (_index == index){
+				currentline=popped
+			}
+
+			_index++
+
 		}
 
+		p.stroke(255,0,0)
+		p.strokeWeight(8)
+		p.line(currentline[0].x, currentline[0].y,currentline[1].x, currentline[1].y,  )
+		p.text(index, 30, 50)
 	}
 }
 
@@ -124,6 +146,19 @@ function mirror(p, m){
 
 		return v(x2, y2)
 
+}
+
+document.onkeydown = e => {
+	if(e.key == '1'){index = 0}
+	if(e.key == '2'){index = 1}
+	if(e.key == '3'){index = 2}
+	if(e.key == '4'){index = 3}
+	if(e.key == '5'){index = 4}
+	// if(e.key == '6'){index = 5}
+	if(e.key == 'ArrowDown'){baselines[index][1].add(v(0,5))}
+	if(e.key == 'ArrowUp'){baselines[index][1].add(v(0,-5))}
+	if(e.key == 's'){baselines[index][0].add(v(0,5))}
+	if(e.key == 'w'){baselines[index][0].add(v(0,-5))}
 }
 
 function intersect_point(point1, point2, point3, point4) {
