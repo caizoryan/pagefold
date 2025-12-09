@@ -6,8 +6,9 @@ import { Q5 as p5 } from "./lib/q5/q5.js"
 let el = document.querySelector(".q5")
 let p = new p5('instance', el);
 let mapfn = fn => arr => arr.map(fn)
+let width = 1000
 p.setup = () => {
-	p.createCanvas(600, 600)
+	p.createCanvas(width, width)
 }
 
 let oninit = []
@@ -38,9 +39,9 @@ let drawPoint = (v) => p.point(v.x, v.y)
 let drawCircle = (v, r) => p.circle(v.x, v.y, r)
 p.angleMode('degrees')
 
-let nx = 150
 let ny = 150
-let nw = 30
+let nw = 80
+let nx = (width-nw)/2
 let nh = 400
 let noff = ((p.mouseY / p.height * nh-50) - 105)
 
@@ -54,13 +55,24 @@ let mainrect = [
 ]
 
 
-let baselines = [
-]
+let baselines = []
+let moxy = 25
+let step=moxy + moxy
+let diff=moxy
+let add=moxy
 
-for(let i = 0; i<12; i++) {
-	baselines.push([v(nx, ny+(i+1)*50), v(nx + nw , ny+(i+1)*50+15)])
+for(let i = 0; i<4; i++) {
+	if (i%2 == 0) baselines.push([
+		v(nx, ny+(i+1)*step+add+diff),
+		v(nx + nw , ny+(i+1)*step+add)
+
+	])
+	else baselines.push([
+		v(nx, ny+(i+1)*step),
+		v(nx + nw , ny+(i+1)*step+diff)
+	])
+
 }
-
 baselines.push([vdup(mainrect[3]), vdup(mainrect[2])])
 
 function render() {
@@ -70,6 +82,10 @@ function render() {
 		let lines = JSON.parse(JSON.stringify(baselines))
 
 		p.background(255)
+		p.push()
+		// let scale = 3.8
+		// p.scale(scale)
+		// p.translate(p.mouseX * (1/(-scale)), p.mouseY* (1/(-scale)))
 		p.fill(255)
 
 		drawQuad(mainrect)
@@ -118,6 +134,8 @@ function render() {
 		p.strokeWeight(8)
 		p.line(currentline[0].x, currentline[0].y,currentline[1].x, currentline[1].y,  )
 		p.text(index, 30, 50)
+		
+		p.pop()
 	}
 }
 
