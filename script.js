@@ -63,14 +63,11 @@ for(let i = 0; i<12; i++) {
 
 baselines.push([vdup(mainrect[3]), vdup(mainrect[2])])
 
-
-
 function render() {
 	p.draw = () => {
 		p.angleMode('degrees');
 
 		let lines = JSON.parse(JSON.stringify(baselines))
-
 
 		p.background(255)
 		p.fill(255)
@@ -111,9 +108,7 @@ function render() {
 			mirrorline.map((e, i) => {p.text(i, e.x, e.y)})
 			mainrect.map((e, i) => {p.text(i, e.x, e.y)})
 
-			if (_index == index){
-				currentline=popped
-			}
+			if (_index == index){currentline=popped}
 
 			_index++
 
