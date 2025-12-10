@@ -65,6 +65,7 @@ baselines.push([vdup(mainrect[3]), vdup(mainrect[2])])
 
 function render() {
 	p.draw = () => {
+		p.frameRate(5)
 		p.angleMode('degrees');
 
 		p.background(255)
@@ -81,6 +82,7 @@ function render() {
 
 
 		let lines = JSON.parse(JSON.stringify(baselines))
+		let linescopy = JSON.parse(JSON.stringify(baselines))
 
 		let realcurrentline = []
 		drawQuad(mainrect)
@@ -127,30 +129,32 @@ function render() {
 				currentmirror = mirrorline
 			}
 
-			if (_index == 1) {
+			if (_index == 3 || _index == 1) {
 				let img = p.createGraphics(nw, nh)
 				circles(img)
 
 				let mask = p.createGraphics(nw, nh)
 				// drawQuad(v(0,0), v(30,15), v(28,45), v(0,45), mask)
-				let cuttl = [baselines[1][0].x - nx, baselines[1][0].y - ny]
+				let vv1 = baselines[_index]
+				let vv2 = baselines[_index+1]
+				let cuttl = [vv1[0].x - nx, vv1[0].y - ny]
 				mask.quad(
 					cuttl[0],
 					cuttl[1],
-					baselines[1][1].x - nx,
-					baselines[1][1].y - ny,
+					vv1[1].x - nx,
+					vv1[1].y - ny,
 
-					baselines[2][1].x - nx,
-					baselines[2][1].y - ny,
-					baselines[2][0].x - nx,
-					baselines[2][0].y - ny
+					vv2[1].x - nx,
+					vv2[1].y - ny,
+					vv2[0].x - nx,
+					vv2[0].y - ny
 				)
 				img.mask(mask)
-				let yy = p.min(cuttl[1], baselines[1][1].y - ny)
-				img = img.get(cuttl[0], yy, nw, p.max(baselines[2][1].y, baselines[2][0].y) - yy)
-				p.strokeWeight(1)
-				p.quad(0, 0, nw, 0, baselines[0][1].x - nx, baselines[0][1].y - ny, baselines[0][0].x - nx, baselines[0][0].y - ny)
+				let yy = p.min(cuttl[1], vv1[1].y - ny)
+				img = img.get(cuttl[0], yy, nw, p.max(vv2[1].y, vv2[0].y) - yy)
 
+				let realcurrentline = linescopy[_index]
+				let currentmirror = mirrorline
 				let start = vdup(realcurrentline[0])
 				let end = vdup(currentmirror[0])
 				let diffv = end.sub(start)
@@ -163,6 +167,9 @@ function render() {
 				let inv = 1
 				if (p1.y - p3.y < 0) inv = -1
 
+				p.stroke(255,0,255)
+				p.strokeWeight(5)
+		p.line(transformedline[0].x, transformedline[0].y, transformedline[1].x, transformedline[1].y)
 				// p.triangle(p1.x,p1.y, p2.x, p2.y, p3.x, p3.y)
 
 				let AB = p.dist(p1.x, p1.y, p2.x, p2.y);
@@ -173,11 +180,11 @@ function render() {
 				let _angle = p.acos(cosAngle)
 
 				p.push()
-				// let off = 0
-				// if (inv > 0) off = p3.y - p1.y
+				let off = 0
+				if (p3.y < p2.y) off = p2.y - p3.y
 				p.translate(currentmirror[0].x, currentmirror[0].y)
 				p.rotate(_angle * inv)
-				p.image(img, 0, 0)
+				p.image(img, 0, -off)
 
 				p.pop()
 
